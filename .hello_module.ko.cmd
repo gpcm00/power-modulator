@@ -1,0 +1,1 @@
+cmd_/home/gpcm/Documents/Linux-Course/final-proj/hello_module.ko := ld -r  -m elf_x86_64 -z noexecstack   --build-id=sha1  -T scripts/module.lds -o /home/gpcm/Documents/Linux-Course/final-proj/hello_module.ko /home/gpcm/Documents/Linux-Course/final-proj/hello_module.o /home/gpcm/Documents/Linux-Course/final-proj/hello_module.mod.o;  true

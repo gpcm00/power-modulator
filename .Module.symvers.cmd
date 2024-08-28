@@ -1,0 +1,1 @@
+cmd_/home/gpcm/Documents/Linux-Course/final-proj/Module.symvers := sed 's/\.ko$$/\.o/' /home/gpcm/Documents/Linux-Course/final-proj/modules.order | scripts/mod/modpost -m -a  -o /home/gpcm/Documents/Linux-Course/final-proj/Module.symvers -e -i Module.symvers   -T -
