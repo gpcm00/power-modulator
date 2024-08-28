@@ -1,1 +1,0 @@
-cmd_/home/gpcm/Documents/Linux-Course/final-proj/hello_module.mod := { echo  /home/gpcm/Documents/Linux-Course/final-proj/main.o;  echo; } > /home/gpcm/Documents/Linux-Course/final-proj/hello_module.mod
