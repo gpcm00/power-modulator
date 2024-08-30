@@ -29,9 +29,9 @@ int decodemode(char* mode)
 }
 
 void readmem(volatile void* addr, int n) {
-	printf("reading %d addresses\n", n);
 	for(int i = 0; i < n; i+=4) {
-		volatile void* readaddr = addr + i;
+		volatile void* readaddr = addr;
+		readaddr++;
 		printf("0x%lX: ", (long)readaddr);
 		int val = *(int*)readaddr;
 		printf("0x%X (%d)\n",  val, val);
@@ -82,18 +82,19 @@ int main(int argc, char** argv)
 	
 	printf("requesting %ld bytes\n", total_offset);
 	
-	void* base = mmap(NULL, total_offset, PROT_READ | PROT_WRITE, MAP_SHARED, fd, addr_aligned);
-	if(base == NULL) {
+	volatile void* base = mmap(NULL, total_offset, PROT_READ | PROT_WRITE, MAP_SHARED, 
+								fd, addr_aligned);
+	if(base == MAP_FAILED) {
 		perror("mmap");
 		return 1;
 	}
 
 	
 	if(mode == 1) {
-		printf("requested to read %d bytes from addr 0x%lX\n", n, addr);
-		readmem((volatile void*)addr, n);
+		printf("requesting to read %d bytes from addr 0x%lX\n", n, addr);
+		readmem(base + addr_offset, n);
 	} else {
-		writemem((volatile void*)addr, n);
+		writemem(base + addr_offset, n);
 	}
 	
 	return 0;

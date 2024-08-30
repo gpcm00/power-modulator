@@ -18,7 +18,7 @@ static struct gpio_desc *zc = NULL;
 static struct gpio_desc *pw = NULL;
 static struct hrtimer tmr;
 
-static u64 elapsed = 0;
+static ktime_t elapsed , earlier, now;
 
 static int powm_probe(struct platform_device *pdev);
 static int powm_remov(struct platform_device *pdev);
@@ -47,9 +47,11 @@ irqreturn_t gpio_irq_test(int irq_no, void *dev_id)
 
 static enum hrtimer_restart hrtimer_irq_test(struct hrtimer *timer)
 {
-	elapsed -= jiffies;
-	printk("Timer interrupt after %ums", jiffies_to_msecs(elapsed));
-	hrtimer_forward_now(timer, ktime_set(2,0));
+	now = hrtimer_cb_get_time(timer);
+	elapsed = ktime_us_delta(now, earlier);
+	earlier = now;
+	printk("Timer interrupt after %ldnsec\n", elapsed);
+	hrtimer_forward_now(timer, ktime_set(0,4));
 	return HRTIMER_RESTART;
 }
 
@@ -94,8 +96,8 @@ static int powm_probe(struct platform_device *pdev) {
 	hrtimer_init(&tmr, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	tmr.function = hrtimer_irq_test;
 
-	elapsed = jiffies;
-	hrtimer_start(&tmr, ms_to_ktime(3), HRTIMER_MODE_REL_HARD);
+	hrtimer_start(&tmr, ms_to_ktime(300), HRTIMER_MODE_REL_HARD);
+	earlier = hrtimer_cb_get_time(&tmr);
 
 	printk("Initialized hrtimer module at address 0x%X\n", tmr.base);
 
@@ -112,6 +114,8 @@ return_error:
 static int powm_remov(struct platform_device *pdev) {
 	printk("Removing power modulator module\n");
 	gpiod_put(zc);
+	gpiod_put(pw);
+	hrtimer_cancel(&tmr);
 	return 0;
 }
 
