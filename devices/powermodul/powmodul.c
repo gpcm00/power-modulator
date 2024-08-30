@@ -6,6 +6,9 @@
 #include <linux/of_device.h>
 #include <linux/gpio/consumer.h>
 #include <linux/interrupt.h>
+#include <linux/jiffies.h>
+#include <linux/hrtimer.h>
+
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("gpcm00");
@@ -13,6 +16,9 @@ MODULE_DESCRIPTION("Power modulator device driver");
 
 static struct gpio_desc *zc = NULL;
 static struct gpio_desc *pw = NULL;
+static struct hrtimer tmr;
+
+static u64 elapsed = 0;
 
 static int powm_probe(struct platform_device *pdev);
 static int powm_remov(struct platform_device *pdev);
@@ -33,10 +39,18 @@ static struct platform_driver powm_driver = {
 	},
 };
 
-irqreturn_t placeholder(int irq_no, void *dev_id)
+irqreturn_t gpio_irq_test(int irq_no, void *dev_id)
 {
 	pr_info("powm - Info: Interrupt triggerred\n");
 	return IRQ_HANDLED;
+}
+
+static enum hrtimer_restart hrtimer_irq_test(struct hrtimer *timer)
+{
+	elapsed -= jiffies;
+	printk("Timer interrupt after %ums", jiffies_to_msecs(elapsed));
+	hrtimer_forward_now(timer, ktime_set(2,0));
+	return HRTIMER_RESTART;
 }
 
 static int powm_probe(struct platform_device *pdev) {
@@ -45,7 +59,8 @@ static int powm_probe(struct platform_device *pdev) {
 	int ret = -1;
 
 	pr_info("Initializing power modulator module\n");
-
+	
+	/* initialize gpio */
 	zc = gpiod_get(dev, "zc", GPIOD_IN);
 	if(IS_ERR(zc)) {
 		pr_err("powm - Error: Could not set up ZC GPIO\n");
@@ -60,17 +75,29 @@ static int powm_probe(struct platform_device *pdev) {
 		goto clear_zc;
 	}
 
+	gpiod_set_value(pw, 1);
+	printk("PW pin is set to %u\n", gpiod_get_value(pw));
+
 	gpio_irq = gpiod_to_irq(zc);
 	if(gpio_irq < 0) {
 		pr_err("powm - Error: Failed to get an IRQ number\n");
 		goto clear_pw;
 	}
 	
-	if(request_irq(gpio_irq, placeholder, 
-					IRQF_TRIGGER_RISING, "powm", NULL) < 0) {
+	if(request_irq(gpio_irq, gpio_irq_test, 
+				IRQF_TRIGGER_RISING, "powm", NULL) < 0) {
 		pr_err("powm - Error: Failed to request IRQ\n");
 		goto clear_pw;
 	}
+
+	/* initialize timer */
+	hrtimer_init(&tmr, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	tmr.function = hrtimer_irq_test;
+
+	elapsed = jiffies;
+	hrtimer_start(&tmr, ms_to_ktime(3), HRTIMER_MODE_REL_HARD);
+
+	printk("Initialized hrtimer module at address 0x%X\n", tmr.base);
 
 	return 0;
 
