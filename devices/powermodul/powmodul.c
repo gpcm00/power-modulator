@@ -50,8 +50,9 @@ static enum hrtimer_restart hrtimer_irq_test(struct hrtimer *timer)
 	now = hrtimer_cb_get_time(timer);
 	elapsed = ktime_us_delta(now, earlier);
 	earlier = now;
-	printk("Timer interrupt after %ldnsec\n", elapsed);
-	hrtimer_forward_now(timer, ktime_set(0,4));
+	// printk("Timer interrupt after %ldnsec\n", elapsed);
+	gpiod_set_value(pw, !gpiod_get_value(pw));
+	hrtimer_forward_now(timer, ktime_set(0,4166));
 	return HRTIMER_RESTART;
 }
 
