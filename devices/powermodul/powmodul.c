@@ -52,7 +52,7 @@ static enum hrtimer_restart hrtimer_irq_test(struct hrtimer *timer)
 	earlier = now;
 	// printk("Timer interrupt after %ldnsec\n", elapsed);
 	gpiod_set_value(pw, !gpiod_get_value(pw));
-	hrtimer_forward_now(timer, ktime_set(0,4166));
+	hrtimer_forward_now(timer, ktime_set(0, 32680));
 	return HRTIMER_RESTART;
 }
 
