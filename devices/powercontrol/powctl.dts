@@ -1,0 +1,39 @@
+/dts-v1/;
+/plugin/;
+
+/* overlay for the power module controller */
+
+/ {
+	compatible = "brcm,bcm2835";
+
+	fragment@0 {
+		target-path = "/";
+		__overlay__ {
+			power_controller {
+				compatible = "powercontrol,gpcm00";
+				status = "okay";
+				zc-gpio = <&gpio 4 0>;
+				pw-gpio = <&gpio 5 1>;
+			};
+		};
+	};
+	
+	
+	fragment@1 {
+		target = <&gpio>;
+		__overlay__ {
+			power_controller_pins: power_controller_pins {
+				brcm,pins = <4 5>;
+				brcm,function = <0 1>;
+			};
+		};
+	};
+	__overrides__ {
+		zc_pin = <&power_controller>, "interrupts:0",
+				 <&power_controller>, "zc-gpio:0",
+		         <&power_controller_pins>, "brcm,pins:0";
+				 
+		pw_pin = <&power_controller>, "pw-gpio:1",
+		         <&power_controller_pins>, "brcm,pins:1";
+	};
+};
