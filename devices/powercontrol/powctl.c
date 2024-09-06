@@ -85,7 +85,7 @@ static int powctl_probe(struct platform_device *pdev) {
 	struct device *dev = &pdev->dev;
 	int ret = -1;
 
-	pr_info(POWCTL_PRFX "Initializing power modulator module");
+	pr_info(POWCTL_PRFX "Initializing power modulator devices");
 	
 	/* initialize gpio */
 	powctl_device.zc = gpiod_get(dev, "zc", GPIOD_IN);
